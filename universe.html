@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI株価予測：ユニバース選定完全ガイド</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Chart Container Styling - Mandatory Strictness */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            /* Base height */
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Custom Scrollbar for code blocks */
+        .code-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .code-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .code-scroll::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl text-teal-700 font-bold">📊 AI-Quant</span>
+                <span class="text-gray-400">|</span>
+                <h1 class="text-sm md:text-base font-bold text-gray-700">ユニバース選定戦略ガイド</h1>
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#strategy" class="text-gray-600 hover:text-teal-700 transition">戦略シミュレータ</a>
+                <a href="#simulation" class="text-gray-600 hover:text-teal-700 transition">視覚化ラボ</a>
+                <a href="#code" class="text-gray-600 hover:text-teal-700 transition">実装コード</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <!-- Hero Section -->
+        <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">予測精度の8割は「銘柄選定」で決まる</h2>
+                <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10">
+                    AIモデル、特にランキング学習において最も重要なのはアルゴリズムではなく「どの銘柄をバスケットに入れるか（ユニバース）」です。<br>
+                    流動性、指数採用、セクターバランス。プロの選定基準をここでマスターしましょう。
+                </p>
+                <button onclick="document.getElementById('strategy').scrollIntoView({behavior: 'smooth'})"
+                    class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:-translate-y-1">
+                    戦略を選択する
+                </button>
+            </div>
+        </section>
+
+        <!-- Strategy Engine Section -->
+        <section id="strategy" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                <!-- Left: Controls -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">あなたのスタイルは？</h3>
+                        <p class="text-sm text-gray-600 mb-6">経験レベルに応じて最適なユニバース（対象銘柄群）を提案します。</p>
+
+                        <div class="space-y-3">
+                            <button onclick="setStrategy('beginner')" id="btn-beginner"
+                                class="w-full text-left p-4 rounded-lg border-2 transition-all duration-200 border-teal-500 bg-teal-50 shadow-md">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-teal-900">初心者・中級者</span>
+                                    <span class="text-2xl">🌱</span>
+                                </div>
+                                <p class="text-xs text-teal-700 mt-1">まずは動くモデルを作りたい</p>
+                            </button>
+
+                            <button onclick="setStrategy('pro')" id="btn-pro"
+                                class="w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-teal-300 transition-all duration-200 bg-white">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-gray-700">上級者・ガチ勢</span>
+                                    <span class="text-2xl">🚀</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">実運用・高精度を目指す</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics Display -->
+                    <div class="bg-slate-800 text-white p-6 rounded-xl shadow-md">
+                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">ターゲット指標</h4>
+                        <div class="flex justify-between items-end mb-4">
+                            <div>
+                                <p class="text-xs text-slate-400">推奨銘柄数</p>
+                                <p id="metric-count" class="text-3xl font-bold text-teal-400">225</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-400">データ取得難易度</p>
+                                <p id="metric-difficulty" class="text-xl font-bold text-amber-400">★☆☆☆☆</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div id="metric-bar" class="bg-teal-500 h-full transition-all duration-500"
+                                style="width: 20%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content Display -->
+                <div class="lg:col-span-8">
+                    <div
+                        class="bg-white p-8 rounded-xl shadow-lg border border-gray-100 h-full flex flex-col justify-center">
+                        <div id="strategy-content">
+                            <!-- Dynamic Content Injected Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualization Lab -->
+        <section id="simulation" class="bg-slate-50 py-12 border-t border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-gray-900">視覚化ラボ：なぜその選定が必要なのか？</h2>
+                    <p class="text-gray-600 mt-2">「流動性」と「セクター分散」がモデル精度に与える影響をシミュレーションします。</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex justify-center mb-8">
+                    <div class="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
+                        <button onclick="switchTab('liquidity')" id="tab-liquidity"
+                            class="px-6 py-2 rounded-md text-sm font-medium bg-teal-600 text-white shadow-sm transition-all">
+                            1. 流動性とノイズ
+                        </button>
+                        <button onclick="switchTab('sector')" id="tab-sector"
+                            class="px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-teal-600 transition-all">
+                            2. セクターバランス
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chart Area -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-gray-100 relative min-h-[500px]">
+
+                    <!-- Liquidity View -->
+                    <div id="view-liquidity" class="transition-opacity duration-300">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="md:col-span-1 space-y-4">
+                                <h3 class="text-xl font-bold text-gray-800">売買代金とモデル誤差の関係</h3>
+                                <p class="text-sm text-gray-600 leading-relaxed">
+                                    AIモデルにとって最大の敵は「スリッページ」と「ノイズ」です。<br><br>
+                                    右の図は、売買代金（横軸）と予測誤差（縦軸）の関係を示しています。
+                                    <strong
+                                        class="text-amber-600">売買代金が低い銘柄（左側）は、少額の注文で価格が乱高下するため、AIが誤った学習をしやすくなります。</strong>
+                                </p>
+                                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
+                                    <p class="text-xs text-amber-800 font-bold">💡 ポイント</p>
+                                    <p class="text-xs text-amber-700 mt-1">
+                                        上位500〜2000銘柄に絞ることで、この「ノイズ領域」を自動的に除外できます。
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 flex flex-col justify-center">
+                                <div id="plotly-liquidity" class="chart-container w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sector View -->
+                    <div id="view-sector" class="hidden transition-opacity duration-300">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="md:col-span-1 space-y-4">
+                                <h3 class="text-xl font-bold text-gray-800">ランキング学習とセクター分散</h3>
+                                <p class="text-sm text-gray-600 leading-relaxed">
+                                    JPX方式（相対リターン予測）では、市場全体が暴落しても「相対的に強い銘柄」を見つけることが重要です。<br><br>
+                                    IT株ばかり選ぶと、ITセクター全体の暴落時に順位が付けられなくなります。
+                                </p>
+                                <div class="space-y-2 mt-4">
+                                    <p class="text-xs font-bold text-gray-500 uppercase">シミュレーション操作</p>
+                                    <button onclick="updateSectorChart('normal')"
+                                        class="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm transition">
+                                        📈 通常相場 (連動)
+                                    </button>
+                                    <button onclick="updateSectorChart('rotation')"
+                                        class="w-full text-left px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded text-sm transition">
+                                        🔄 セクターローテーション (乖離)
+                                    </button>
+                                    <button onclick="updateSectorChart('crash')"
+                                        class="w-full text-left px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded text-sm transition">
+                                        📉 市場クラッシュ (全体下落)
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 flex flex-col justify-center">
+                                <div class="chart-container w-full">
+                                    <canvas id="chart-sector"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Implementation Section -->
+        <section id="code" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">実践：Pythonコードでユニバースを取得</h2>
+
+            <div class="bg-slate-900 rounded-xl overflow-hidden shadow-2xl">
+                <!-- Code Tabs -->
+                <div class="flex border-b border-slate-700 bg-slate-800">
+                    <button onclick="showCode('A')" id="btn-code-A"
+                        class="px-6 py-3 text-sm font-medium text-teal-400 border-b-2 border-teal-400 bg-slate-700 focus:outline-none transition">
+                        方法A: 日経225 (推奨)
+                    </button>
+                    <button onclick="showCode('B')" id="btn-code-B"
+                        class="px-6 py-3 text-sm font-medium text-slate-400 hover:text-slate-200 focus:outline-none transition">
+                        方法B: 売買代金上位 (カスタム)
+                    </button>
+                </div>
+
+                <!-- Code Content -->
+                <div class="relative group">
+                    <button onclick="copyCode()"
+                        class="absolute top-4 right-4 bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition border border-slate-600">
+                        📋 Copy Code
+                    </button>
+
+                    <div id="code-content-A" class="p-6 overflow-x-auto code-scroll">
+                        <pre class="font-mono text-sm text-slate-300 leading-relaxed"><code>import pandas as pd
+
+def get_nikkei225_tickers():
+    """
+    Wikipediaから日経平均採用銘柄のリストを取得する
+    最も手軽で、感情分析との相性も良い手法です。
+    """
+    url = "https://en.wikipedia.org/wiki/Nikkei_225"
+    try:
+        tables = pd.read_html(url)
+        # 銘柄コードが含まれるテーブルを探す（通常は最初か2番目）
+        df = tables[0] 
+        
+        # カラム名を調整（Wikipediaの構成による）
+        print("取得データ例:", df.head())
+        
+        # 銘柄コード抽出 (Symbolカラムを想定)
+        tickers = df['Symbol'].astype(str).tolist()
+        return tickers
+
+    except Exception as e:
+        print(f"取得エラー: {e}")
+        return []
+
+# 実行
+# tickers = get_nikkei225_tickers()
+# print(f"{len(tickers)}銘柄を取得しました")</code></pre>
+                    </div>
+
+                    <div id="code-content-B" class="p-6 overflow-x-auto code-scroll hidden">
+                        <pre class="font-mono text-sm text-slate-300 leading-relaxed"><code>import yfinance as yf
+import pandas as pd
+
+def get_liquid_universe(candidate_tickers, days=30, top_n=500):
+    """
+    候補銘柄リストの中から、直近の平均売買代金が大きい上位N銘柄を返す
+    本格的なAIモデル構築（JPX方式など）向け。
+    """
+    # 一括ダウンロード
+    data = yf.download(candidate_tickers, period=f"{days}d", progress=False)
+    
+    # 売買代金 = 終値 * 出来高
+    # MultiIndexカラムの場合の処理が必要な場合があります
+    close = data['Close']
+    volume = data['Volume']
+    
+    trading_value = close * volume
+    
+    # 平均売買代金で降順ソート
+    mean_trading_value = trading_value.mean().sort_values(ascending=False)
+    
+    # 上位N銘柄のコードを取得
+    top_tickers = mean_trading_value.head(top_n).index.tolist()
+    return top_tickers
+
+# 注意: candidate_tickersには、東証全銘柄コードのリストが必要です。
+# 全銘柄リストはJPX公式サイトからExcelをDLして作成してください。</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-teal-50 border border-teal-200 rounded-lg p-6 flex items-start gap-4">
+                <div class="text-3xl">🏁</div>
+                <div>
+                    <h3 class="font-bold text-teal-800 text-lg">結論：まず何から始めるべきか？</h3>
+                    <p class="text-teal-700 mt-2 text-sm leading-relaxed">
+                        最初は複雑なことをせず、<strong>方法A (日経225銘柄)</strong> のリストを作成し、yfinanceでデータを取得してモデルを回しましょう。<br>
+                        データの欠損や流動性不足によるエラーを回避でき、アルゴリズムの検証に集中できます。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm">
+        <p>&copy; 2026 AI Stock Prediction Universe Guide. Based on the provided Source Report.</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- State ---
+        const state = {
+            strategy: 'beginner',
+            currentTab: 'liquidity',
+            sectorChart: null
+        };
+
+        // --- Data & Content ---
+        const contentData = {
+            beginner: {
+                title: "推奨：指数採用銘柄 (Indices)",
+                subtitle: "日経平均株価 (Nikkei 225) / TOPIX Core 30",
+                description: `
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>安全性:</strong> 既に東証の審査を通過しており、流動性が担保されています。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>入手性:</strong> <span class="bg-yellow-100 px-1 font-bold text-gray-800">日経225</span>ならWikipedia等から簡単にリスト化可能。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>分析相性:</strong> ニュース記事が豊富で、感情分析（Sentiment Analysis）の効果が出やすいです。</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-teal-50 rounded-lg text-sm text-teal-800 border border-teal-100">
+                        <strong>最初の一歩:</strong> 複雑なスクリーニングは不要です。まずは日経225のリストを使ってパイプラインを完成させましょう。
+                    </div>
+                `,
+                count: "225",
+                difficulty: "★☆☆☆☆",
+                barWidth: "20%"
+            },
+            pro: {
+                title: "推奨：売買代金上位 (Top Liquid)",
+                subtitle: "東証全銘柄から Top 500 ~ 2000",
+                description: `
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>スリッページ回避:</strong> 売買代金（株価×出来高）が大きい銘柄を選ぶことで、ノイズを最小化します。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>機会損失防止:</strong> 指数に含まれていない、勢いのある新興銘柄も捕捉できます。</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-teal-500 mr-2">✅</span>
+                            <span><strong>カスタマイズ:</strong> 大型株モデルなら500、中小型含むなら2000と調整可能。</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-800 border border-blue-100">
+                        <strong>実装のコツ:</strong> 東証の全銘柄コードリストを用意し、直近30日の平均売買代金でソートして抽出します。
+                    </div>
+                `,
+                count: "500+",
+                difficulty: "★★★★☆",
+                barWidth: "85%"
+            }
+        };
+
+        // --- Functions ---
+
+        function setStrategy(type) {
+            state.strategy = type;
+            const data = contentData[type];
+
+            // Update UI State
+            const btnBeginner = document.getElementById('btn-beginner');
+            const btnPro = document.getElementById('btn-pro');
+
+            if (type === 'beginner') {
+                btnBeginner.className = "w-full text-left p-4 rounded-lg border-2 transition-all duration-200 border-teal-500 bg-teal-50 shadow-md transform scale-[1.02]";
+                btnPro.className = "w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-teal-300 transition-all duration-200 bg-white opacity-70 hover:opacity-100";
+            } else {
+                btnBeginner.className = "w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-teal-300 transition-all duration-200 bg-white opacity-70 hover:opacity-100";
+                btnPro.className = "w-full text-left p-4 rounded-lg border-2 transition-all duration-200 border-teal-500 bg-teal-50 shadow-md transform scale-[1.02]";
+            }
+
+            // Update Content
+            const contentDiv = document.getElementById('strategy-content');
+            contentDiv.innerHTML = `
+                <h3 class="text-2xl font-bold text-gray-800 mb-1">${data.title}</h3>
+                <p class="text-sm font-bold text-teal-600 mb-6 uppercase tracking-wide">${data.subtitle}</p>
+                <div class="text-gray-600 leading-relaxed text-sm md:text-base">
+                    ${data.description}
+                </div>
+            `;
+
+            // Update Metrics
+            document.getElementById('metric-count').innerText = data.count;
+            document.getElementById('metric-difficulty').innerText = data.difficulty;
+            document.getElementById('metric-bar').style.width = data.barWidth;
+        }
+
+        function switchTab(tab) {
+            state.currentTab = tab;
+            const btnLiq = document.getElementById('tab-liquidity');
+            const btnSec = document.getElementById('tab-sector');
+            const viewLiq = document.getElementById('view-liquidity');
+            const viewSec = document.getElementById('view-sector');
+
+            if (tab === 'liquidity') {
+                btnLiq.className = "px-6 py-2 rounded-md text-sm font-medium bg-teal-600 text-white shadow-sm transition-all";
+                btnSec.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-teal-600 transition-all";
+                viewLiq.classList.remove('hidden');
+                viewSec.classList.add('hidden');
+                setTimeout(() => viewLiq.classList.remove('opacity-0'), 10);
+
+                // Resize Plotly
+                Plotly.Plots.resize('plotly-liquidity');
+            } else {
+                btnSec.className = "px-6 py-2 rounded-md text-sm font-medium bg-teal-600 text-white shadow-sm transition-all";
+                btnLiq.className = "px-6 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-teal-600 transition-all";
+                viewSec.classList.remove('hidden');
+                viewLiq.classList.add('hidden');
+                setTimeout(() => viewSec.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        function showCode(type) {
+            const btnA = document.getElementById('btn-code-A');
+            const btnB = document.getElementById('btn-code-B');
+            const contentA = document.getElementById('code-content-A');
+            const contentB = document.getElementById('code-content-B');
+
+            if (type === 'A') {
+                btnA.className = "px-6 py-3 text-sm font-medium text-teal-400 border-b-2 border-teal-400 bg-slate-700 focus:outline-none transition";
+                btnB.className = "px-6 py-3 text-sm font-medium text-slate-400 hover:text-slate-200 focus:outline-none transition";
+                contentA.classList.remove('hidden');
+                contentB.classList.add('hidden');
+            } else {
+                btnB.className = "px-6 py-3 text-sm font-medium text-teal-400 border-b-2 border-teal-400 bg-slate-700 focus:outline-none transition";
+                btnA.className = "px-6 py-3 text-sm font-medium text-slate-400 hover:text-slate-200 focus:outline-none transition";
+                contentB.classList.remove('hidden');
+                contentA.classList.add('hidden');
+            }
+        }
+
+        function copyCode() {
+            const activeCode = document.querySelector('.code-scroll:not(.hidden) pre').innerText;
+            navigator.clipboard.writeText(activeCode).then(() => {
+                alert('コードをコピーしました');
+            });
+        }
+
+        // --- Visualizations ---
+
+        // 1. Plotly Liquidity Chart
+        function initLiquidityChart() {
+            // Data Generation: High Liquidity = Low Error
+            const n = 150;
+            const x = []; // Trading Value
+            const y = []; // Model Error
+            const text = [];
+
+            for (let i = 0; i < n; i++) {
+                // Logarithmic distribution for trading value
+                const val = Math.exp(Math.random() * 6 + 12);
+                x.push(val);
+
+                // Error inverse to value + noise
+                const baseError = 100 / Math.log(val);
+                const noise = Math.random() * 2;
+                y.push(baseError + noise);
+
+                text.push(`Ticker ${1000 + i}`);
+            }
+
+            const trace = {
+                x: x,
+                y: y,
+                mode: 'markers',
+                type: 'scatter',
+                text: text,
+                marker: {
+                    size: 10,
+                    color: x.map(v => Math.log(v)), // Color by value
+                    colorscale: 'Teal',
+                    opacity: 0.7
+                }
+            };
+
+            const layout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                xaxis: {
+                    type: 'log',
+                    title: '売買代金 (対数スケール)',
+                    gridcolor: '#f1f5f9'
+                },
+                yaxis: {
+                    title: '予測誤差 (RMSE)',
+                    gridcolor: '#f1f5f9'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                hovermode: 'closest'
+            };
+
+            const config = { responsive: true, displayModeBar: false };
+            Plotly.newPlot('plotly-liquidity', [trace], layout, config);
+        }
+
+        // 2. Chart.js Sector Rotation
+        function initSectorChart() {
+            const ctx = document.getElementById('chart-sector').getContext('2d');
+
+            // Initialize with "Normal" data
+            const labels = Array.from({ length: 20 }, (_, i) => `Day ${i + 1}`);
+
+            state.sectorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'ITセクター (High Beta)',
+                            data: [],
+                            borderColor: '#0f766e', // Teal 700
+                            backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: '銀行セクター (Defensive)',
+                            data: [],
+                            borderColor: '#f59e0b', // Amber 500
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: '市場平均 (Index)',
+                            data: [],
+                            borderColor: '#94a3b8', // Slate 400
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                footer: (items) => {
+                                    // Illustrate Ranking
+                                    const vals = items.map(i => i.raw).sort((a, b) => b - a);
+                                    let str = "Rank: ";
+                                    items.forEach(item => {
+                                        const rank = vals.indexOf(item.raw) + 1;
+                                        str += `${item.dataset.label.split(' ')[0]}=${rank}位 `;
+                                    });
+                                    return str;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            updateSectorChart('normal');
+        }
+
+        function updateSectorChart(mode) {
+            const days = 20;
+            const dataIT = [];
+            const dataBank = [];
+            const dataIndex = [];
+
+            let priceIT = 100;
+            let priceBank = 100;
+
+            for (let i = 0; i < days; i++) {
+                let changeIT = 0;
+                let changeBank = 0;
+
+                if (mode === 'normal') {
+                    // Correlated
+                    const mkt = (Math.random() - 0.45);
+                    changeIT = mkt * 1.5;
+                    changeBank = mkt * 0.8;
+                } else if (mode === 'rotation') {
+                    // Inverse correlation (Rotation)
+                    changeIT = (Math.random() - 0.7) * 2; // IT falls
+                    changeBank = (Math.random() - 0.3) * 1.5; // Bank rises
+                } else if (mode === 'crash') {
+                    // Everything falls, but at different rates
+                    changeIT = -2 - Math.random();
+                    changeBank = -0.5 - Math.random(); // Bank falls less
+                }
+
+                priceIT += changeIT;
+                priceBank += changeBank;
+
+                dataIT.push(priceIT);
+                dataBank.push(priceBank);
+                dataIndex.push((priceIT + priceBank) / 2);
+            }
+
+            state.sectorChart.data.datasets[0].data = dataIT;
+            state.sectorChart.data.datasets[1].data = dataBank;
+            state.sectorChart.data.datasets[2].data = dataIndex;
+            state.sectorChart.update();
+        }
+
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', () => {
+            setStrategy('beginner');
+            initLiquidityChart();
+            initSectorChart();
+        });
+
+    </script>
+</body>
+
+</html>
