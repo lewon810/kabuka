@@ -1,2 +1,3 @@
 # kabuka
-AIに株価を予想させるぞ
+https://lewon810.github.io/kabuka/
+
